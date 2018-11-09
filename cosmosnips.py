@@ -10,6 +10,7 @@ import warnings
 def z2x(z, Om=0.31):
     """flat ΛCDM comoving distance χ in Mpc/h
     """
+    z = np.asarray(z)
     OL = 1 - Om
     a = 1 / (1+z)
     return 2997.92458 * OL**-.5 * (hyp2f1(1/3, 1/2, 4/3, -Om*a**-3/OL) / a
@@ -18,8 +19,7 @@ def z2x(z, Om=0.31):
 def x2z(x, Om=0.31):
     """Inverse of z2x()
     """
-    if np.isscalar(x):
-        x = np.array([x])
+    x = np.asarray(x)
     if any(xi >= z2x(1e3) for xi in x):
         warnings.warn("χ too large, touching the last scattering surface")
     z = fsolve(lambda y: z2x(y, Om=Om) - x, x / 2997.92458)
@@ -28,6 +28,7 @@ def x2z(x, Om=0.31):
 def z2t(z, Om=0.31):
     """flat ΛCDM age in yr/h
     """
+    z = np.asarray(z)
     OL = 1 - Om
     a = 1 / (1+z)
     return 9.78e9 * 2/3 / np.sqrt(OL) * np.arcsinh(np.sqrt(OL/Om * a**3))
@@ -41,6 +42,7 @@ def D(z, Om=0.31, norm='MD'):
         - 'MD' (default): normalized to a at matter-dominated era
         - '0': normalized to 1 at redshift zero
     """
+    z = np.asarray(z)
     OL = 1 - Om
     a = 1 / (1+z)
     if norm == 'MD':
@@ -54,6 +56,7 @@ def D(z, Om=0.31, norm='MD'):
 def f(z, Om=0.31):
     """flat ΛCDM growth rate
     """
+    z = np.asarray(z)
     OL = 1 - Om
     a = 1 / (1+z)
     aa3 = OL*a**3/Om
@@ -63,16 +66,18 @@ def f(z, Om=0.31):
 def aH(z, Om=0.31):
     """flat ΛCDM comoving Hubble aH/c in h/Mpc
     """
+    z = np.asarray(z)
     OL = 1 - Om
     a = 1 / (1+z)
     return np.sqrt(Om / a + OL * a*a) / 2997.92458
 
-def rdz2x(r, d, z):
+def rdz2x(r, d, z, axis=0):
     """RA, Dec, z to Cartesian coordinates, flat cosmology
     """
-    r *= np.pi / 180
-    d *= np.pi / 180
+    r = np.deg2rad(r)
+    d = np.deg2rad(d)
     xi = z2x(z)
-    x = np.stack((xi * np.cos(d) * np.cos(r), xi * np.cos(d) * np.sin(r),
-                xi * np.sin(d)), axis=0)
+    x = np.stack((xi * np.cos(d) * np.cos(r),
+                  xi * np.cos(d) * np.sin(r),
+                  xi * np.sin(d)), axis=axis)
     return x
