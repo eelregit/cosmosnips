@@ -7,6 +7,7 @@ from scipy.special import hyp2f1
 from scipy.optimize import fsolve
 import warnings
 
+
 def z2x(z, Om=0.31):
     """flat ΛCDM comoving distance χ in Mpc/h
     """
@@ -32,6 +33,28 @@ def z2t(z, Om=0.31):
     OL = 1 - Om
     a = 1 / (1+z)
     return 9.78e9 * 2/3 / np.sqrt(OL) * np.arcsinh(np.sqrt(OL/Om * a**3))
+
+
+def rdz2x(r, d, z, axis=0):
+    """RA, Dec, z to Cartesian coordinates, flat cosmology
+    """
+    r = np.deg2rad(r)
+    d = np.deg2rad(d)
+    xi = z2x(z)
+    x = np.stack((xi * np.cos(d) * np.cos(r),
+                  xi * np.cos(d) * np.sin(r),
+                  xi * np.sin(d)), axis=axis)
+    return x
+
+
+def aH(z, Om=0.31):
+    """flat ΛCDM comoving Hubble aH/c in h/Mpc
+    """
+    z = np.asarray(z)
+    OL = 1 - Om
+    a = 1 / (1+z)
+    return np.sqrt(Om / a + OL * a*a) / 2997.92458
+
 
 def D(z, Om=0.31, norm='MD'):
     """flat ΛCDM growth function
@@ -63,21 +86,15 @@ def f(z, Om=0.31):
     return 1 - 6*aa3/11 * hyp2f1(2, 4/3, 17/6, -aa3) \
             / hyp2f1(1, 1/3, 11/6, -aa3)
 
-def aH(z, Om=0.31):
-    """flat ΛCDM comoving Hubble aH/c in h/Mpc
-    """
-    z = np.asarray(z)
-    OL = 1 - Om
-    a = 1 / (1+z)
-    return np.sqrt(Om / a + OL * a*a) / 2997.92458
 
-def rdz2x(r, d, z, axis=0):
-    """RA, Dec, z to Cartesian coordinates, flat cosmology
+def T_EH(k, Gamma=0.21):
+    """Eisenstein & Hu transfer function (pure CDM form)
+
+    The shape parameter Gamma = Om h, and k is in unit of [h / Mpc]
     """
-    r = np.deg2rad(r)
-    d = np.deg2rad(d)
-    xi = z2x(z)
-    x = np.stack((xi * np.cos(d) * np.cos(r),
-                  xi * np.cos(d) * np.sin(r),
-                  xi * np.sin(d)), axis=axis)
-    return x
+    fac = (2.72548/2.7) ** 2 / Gamma
+    q = fac * k
+    C = 14.4 + 325 / (1 + 60.5 * q**1.11)
+    L = np.log(np.e + 1.84*q)
+    T = L / (L + C*q*q)
+    return T
